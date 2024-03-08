@@ -18,8 +18,9 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Compile RA
-      run: ./gradlew assembleDebug
-        find . -iname "*.apk" -exec ls -l "{}" \;
+      run: |
+             ./gradlew assembleDebug
+             find . -iname "*.apk" -exec ls -l "{}" \;
 
     - name: Get short SHA
       id: slug
