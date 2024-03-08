@@ -1,26 +1,47 @@
-name: Android CI
+name: CI Android 2
 
 on:
   push:
-    branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]
+  repository_dispatch:
+    types: [run_build]
+
+permissions:
+  contents: write
+  discussions: write
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
-    - name: set up JDK 11
-      uses: actions/setup-java@v3
-      with:
-        java-version: '11'
-        distribution: 'temurin'
-        cache: gradle
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
+    - name: Compile RA
+      run: |
+        cd pkg/andro
+        ./gradlew assembleDebug
+        find . -iname "*.apk" -exec ls -l "{}" \;
+
+    - name: Get short SHA
+      id: slug
+      run: echo "::set-output name=sha8::$(echo ${GITHUB_SHA} | cut -c1-8)"
+    
+    - uses: actions/upload-artifact@v3
+      with:
+        name: retroarch-android-${{ steps.slug.outputs.sha8 }}
+        path: |
+          pkg/android/phoenix/build/outputs/apk/normal/debug/phoenix-normal-debug.apk
+          pkg/android/phoenix/build/outputs/apk/aarch64/debug/phoenix-aarch64-debug.apk
+
+    - name: Upload to Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          pkg/android/phoenix/build/outputs/apk/normal/debug/phoenix-normal-debug.apk
+          pkg/android/phoenix/build/outputs/apk/aarch64/debug/phoenix-aarch64-debug.apk
+        name: retroarch-android-${{ steps.slug.outputs.sha8 }}
+        tag_name: ${{ github.run_id }}
+        body: Retroarch for android
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
