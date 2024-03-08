@@ -19,7 +19,7 @@ jobs:
 
     - name: Compile RA
       run: |
-        cd pkg/andro
+        cd app
         ./gradlew assembleDebug
         find . -iname "*.apk" -exec ls -l "{}" \;
 
